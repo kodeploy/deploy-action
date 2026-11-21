@@ -1,0 +1,76 @@
+name: KoDeploy Deploy
+description: 이 워크플로가 돈 커밋을 KoDeploy 앱에 지금 설정 그대로 다시 배포한다 (GitHub Actions OIDC, 저장 비밀 없음)
+author: kodeploy
+branding:
+  icon: upload-cloud
+  color: blue
+
+inputs:
+  app:
+    description: KoDeploy 앱 id (앱 설정 > GitHub Actions에 나온다)
+    required: true
+  server:
+    description: KoDeploy API 주소
+    required: false
+    default: https://api.kodeploy.com
+  audience:
+    description: GitHub OIDC ID 토큰의 audience
+    required: false
+    default: kodeploy
+  cli-version:
+    description: kodeploy CLI 버전. 기본값은 이 액션에 체크섬이 고정된 버전이다
+    required: false
+    default: 0.1.0
+  timeout:
+    description: 요청부터 안정화까지 전체 시간 제한 (Go duration, 예 25m)
+    required: false
+    default: 25m
+  settle:
+    description: 모두 running이 된 뒤 더 지켜볼 시간 (0이면 바로 성공)
+    required: false
+    default: 60s
+  wait:
+    description: false면 빌드를 요청만 하고 기다리지 않는다
+    required: false
+    default: "true"
+  fail-on-superseded:
+    description: true면 다른 배포에 밀렸을 때(exit 3) 실패로 끝낸다. false면 notice만 남기고 성공
+    required: false
+    default: "false"
+
+outputs:
+  result:
+    description: success, failed, superseded, timeout, interrupted, requested, error 중 하나
+    value: ${{ steps.deploy.outputs.result }}
+  exit-code:
+    description: kodeploy CLI의 exit code (fail-on-superseded가 false여도 밀렸으면 3)
+    value: ${{ steps.deploy.outputs.exit-code }}
+  build-ids:
+    description: 이번 요청이 만든 빌드 id, 쉼표로 구분
+    value: ${{ steps.deploy.outputs.build-ids }}
+  source-sha:
+    description: 워크플로 커밋으로 빌드된 빌드의 source_sha (끝나기 전이면 빈 값)
+    value: ${{ steps.deploy.outputs.source-sha }}
+
+runs:
+  using: composite
+  steps:
+    # 입력값은 env로만 넘긴다 — run 안에 ${{ inputs.* }}를 쓰면 값이 스크립트로 해석된다
+    - id: install
+      shell: bash
+      env:
+        KD_APP: ${{ inputs.app }}
+        KD_CLI_VERSION: ${{ inputs.cli-version }}
+      run: '"$GITHUB_ACTION_PATH/scripts/install.sh"'
+    - id: deploy
+      shell: bash
+      env:
+        KODEPLOY_SERVER: ${{ inputs.server }}
+        KODEPLOY_APP: ${{ inputs.app }}
+        KODEPLOY_AUDIENCE: ${{ inputs.audience }}
+        KD_BIN: ${{ steps.install.outputs.bin }}
+        KD_TIMEOUT: ${{ inputs.timeout }}
+        KD_SETTLE: ${{ inputs.settle }}
+        KD_WAIT: ${{ inputs.wait }}
+        KD_FAIL_ON_SUPERSEDED: ${{ inputs.fail-on-superseded }}
+      run: '"$GITHUB_ACTION_PATH/scripts/deploy.sh"'

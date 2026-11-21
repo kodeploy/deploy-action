@@ -1,0 +1,4 @@
+1cf323ed7d31da923a36b5d3cfb81b3672b2b731a81163247fc4914c1aac7942  kodeploy_0.1.0_darwin_amd64.tar.gz
+55e2a58cff0166588d3a04249688f4670ef35180cd35fbb47a8be885e3bbd92c  kodeploy_0.1.0_darwin_arm64.tar.gz
+1ce48f77069e1e234e51b8117b3d6952eed1aa551a9f2c26b3f61dccdf29a4e9  kodeploy_0.1.0_linux_amd64.tar.gz
+a82eb06a86a6e0c11f78c90c9759f085fc207f4a2d43cf03996f5e927aecc99e  kodeploy_0.1.0_linux_arm64.tar.gz
