@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: actionlint
+        run: docker run --rm -v "$PWD:/repo" -w /repo rhysd/actionlint:1.7.7 -color
+      - name: shellcheck
+        run: shellcheck scripts/*.sh test/run.sh
+
+  unit:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash --version | head -n 1
+      - run: test/run.sh
+
+  # 실제 릴리스에서 기본 버전을 받아 고정 체크섬으로 확인하고 실행해 본다
+  install:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: ver
+        run: echo "v=$(awk '/^  cli-version:/{f=1} f && /default:/{print $2; exit}' action.yml)" >> "$GITHUB_OUTPUT"
+      - id: install
+        env:
+          ACTIONS_ID_TOKEN_REQUEST_URL: http://unused.invalid   # 권한 검사만 넘긴다 (토큰은 받지 않는다)
+          KD_APP: install-check
+          KD_CLI_VERSION: ${{ steps.ver.outputs.v }}
+        run: scripts/install.sh
+      - env:
+          BIN: ${{ steps.install.outputs.bin }}
+          VER: ${{ steps.ver.outputs.v }}
+        run: |
+          out=$("$BIN" version)
+          echo "$out"
+          case $out in "kodeploy $VER"*) ;; *) exit 1 ;; esac
+
+  # id-token 권한이 없으면 받기 전에 실패한다
+  no-id-token:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - id: action
+        continue-on-error: true
+        uses: ./
+        with:
+          app: 00000000-0000-4000-8000-000000000000
+      - env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: test "$OUTCOME" = failure
