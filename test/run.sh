@@ -203,8 +203,10 @@ eq "bad wait exit" "$?" "2"
 has "bad wait message" "$out" "wait는 true나 false여야 해요"
 
 # 입력값은 인자 하나로만 넘어가고 셸로 해석되지 않는다
+# shellcheck disable=SC2016 # 일부러 펼치지 않은 $(...)를 넘긴다
 run_deploy FAKE_JSON="$work/success.json" KD_TIMEOUT='25m $(touch '"$work"'/pwned); touch '"$work"'/pwned2' >/dev/null
 if [[ -e $work/pwned || -e $work/pwned2 ]]; then fail "timeout input was executed"; else pass; fi
+# shellcheck disable=SC2016
 eq "timeout input stays one argument" "$(sed -n 5p "$work/args")" '25m $(touch '"$work"'/pwned); touch '"$work"'/pwned2'
 
 # --- action.yml 규칙 --------------------------------------------------------------

@@ -47,7 +47,7 @@ elif [[ $final != 0 ]]; then
   if [[ -s $held ]]; then
     cat "$held"
   else
-    kd_error "kodeploy deploy가 exit $code로 끝났어요"
+    kd_error "kodeploy deploy가 exit ${code}로 끝났어요"
   fi
 fi
 rm -rf "$tmp"

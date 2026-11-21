@@ -2,6 +2,7 @@
 # KoDeploy deploy action의 함수 모음. scripts/install.sh, scripts/deploy.sh, test/run.sh가 source한다.
 # bash 3.2(macOS 기본)에서도 돌게 쓴다 — 연관 배열, ${var,,}, process substitution 없이.
 
+# shellcheck disable=SC2034 # install.sh가 쓴다
 KD_RELEASE_BASE="https://github.com/kodeploy/kodeploy/releases/download"
 
 # 워크플로 명령 값 이스케이프 (%, \r, \n)
@@ -95,7 +96,7 @@ kd_install() {
       return 1
     fi
     sums="$tmp/checksums.txt"
-    kd_warning "cli-version $ver는 이 액션에 체크섬이 고정돼 있지 않아 릴리스의 checksums.txt로 확인했어요. 릴리스 파일이 바뀌면 같이 바뀌니, 고정된 기본 버전을 쓰는 것이 안전해요"
+    kd_warning "cli-version ${ver}는 이 액션에 체크섬이 고정돼 있지 않아 릴리스의 checksums.txt로 확인했어요. 릴리스 파일이 바뀌면 같이 바뀌니, 고정된 기본 버전을 쓰는 것이 안전해요"
   fi
   if ! expected=$(kd_expected_sha "$sums" "$asset"); then
     kd_error "체크섬 목록에 $asset 이 없어요"
